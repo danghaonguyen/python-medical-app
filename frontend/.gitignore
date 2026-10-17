@@ -1,0 +1,12 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+#
+# LƯU Ý: các pattern chung (.env, node_modules, build, *.log, .DS_Store...)
+# đã được khai báo ở .gitignore gốc — không lặp lại ở đây.
+# File này chỉ giữ các pattern riêng của frontend.
+
+# Yarn PnP
+/.pnp
+.pnp.js
+
+# Test coverage
+/coverage

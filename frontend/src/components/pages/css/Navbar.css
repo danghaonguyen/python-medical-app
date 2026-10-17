@@ -1,0 +1,106 @@
+.site-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  border-bottom: 1px solid var(--medical-border);
+  background: rgba(255, 255, 255, .96);
+  box-shadow: 0 4px 18px rgba(18, 59, 93, .06);
+  backdrop-filter: blur(12px);
+}
+
+.site-navbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: min(1200px, calc(100% - 32px));
+  min-height: 82px;
+  margin: 0 auto;
+}
+
+.site-navbar-brand img {
+  display: block;
+  width: auto;
+  max-height: 62px;
+}
+
+.site-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.site-nav-link,
+.user-menu-panel button {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.site-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--medical-navy);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  line-height: 1.2;
+  transition: color .2s ease, background .2s ease;
+}
+
+.site-nav-link:hover,
+.site-nav-link:focus-visible {
+  background: var(--medical-mint);
+  color: var(--medical-teal-dark);
+}
+
+.site-nav-link i { font-size: 18px; }
+.user-menu { position: relative; }
+.user-menu-arrow { width: 19px; height: 19px; margin-left: 3px; color: var(--medical-teal-dark); stroke-width: 2.5; transition: transform .2s ease; }
+.user-menu-trigger[aria-expanded="true"] .user-menu-arrow { transform: rotate(180deg); }
+.user-menu-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  display: grid;
+  min-width: 250px;
+  padding: 10px;
+  border: 1px solid var(--medical-border);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(18, 59, 93, .14);
+}
+.user-menu-panel button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 15px;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--medical-text);
+  text-align: left;
+  font-size: 18px;
+  line-height: 1.35;
+}
+.user-menu-panel button:hover { background: var(--medical-mint); color: var(--medical-teal-dark); }
+.nav-toggle { display: none; border: 0; background: transparent; cursor: pointer; }
+.nav-toggle span { display: block; width: 25px; height: 3px; margin: 5px 0; border-radius: 3px; background: var(--medical-navy); }
+
+@media (max-width: 991.98px) {
+  .site-navbar-inner { position: relative; min-height: 72px; }
+  .nav-toggle { display: block; padding: 8px; }
+  .site-nav { position: absolute; top: calc(100% + 8px); right: 0; left: 0; display: none; padding: 10px; border: 1px solid var(--medical-border); border-radius: 12px; background: #fff; box-shadow: 0 12px 26px rgba(18, 59, 93, .12); }
+  .site-nav.is-open { display: block; }
+  .site-nav-links { display: grid; gap: 3px; }
+  .site-nav-link { width: 100%; justify-content: center; padding: 13px 12px; font-size: 17px; }
+  .user-menu-panel { position: static; margin: 4px 0 0; box-shadow: none; }
+  .user-menu-panel button { justify-content: center; text-align: center; }
+}
+
+@media (max-width: 480px) {
+  .site-navbar-inner { width: min(100% - 20px, 1200px); }
+  .site-navbar-brand img { max-height: 52px; }
+}
