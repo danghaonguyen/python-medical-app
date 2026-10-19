@@ -18,7 +18,7 @@ class UserRegister(BaseModel):
     username: str = Field(min_length=1, max_length=50)
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
-    code: str = Field(min_length=6, max_length=6)
+
 
     @field_validator("username", "password", mode="before")
     @classmethod
@@ -38,15 +38,6 @@ class UserRegister(BaseModel):
             raise ValueError("Email phải là chuỗi.")
 
         return value.strip().lower()
-
-    @field_validator("code", mode="before")
-    @classmethod
-    def validate_code(cls, value):
-        if not isinstance(value, str) or not re.fullmatch(r"\d{6}", value):
-            raise ValueError("Mã xác thực phải gồm 6 chữ số.")
-
-        return value
-
 
 class UserLogin(BaseModel):
     """Validate dữ liệu đăng nhập."""

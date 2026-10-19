@@ -1,42 +1,34 @@
+
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { registerUser, sendVerificationCode } from "../../services/auth";
+import { registerUser } from "../../services/auth";
 import "./css/Auth.css";
 import { toast, ToastContainer } from "react-toastify";
 
 const Register = () => {
-  const [step, setStep] = useState("form");
-
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-
-  const [verificationCode, setVerificationCode] = useState("");
-
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-
-  // 🔥 tách password toggle riêng (fix UX bug)
   const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
-  
-  // 🔹 CHUYỂN HƯỚNG NẾU ĐÃ ĐĂNG NHẬP
+
   useEffect(() => {
     const userId = localStorage.getItem("user_id");
+
     if (userId) {
       navigate("/", { replace: true });
     }
   }, [navigate]);
 
-  // ================= SEND CODE =================
-  const handleSendCode = async () => {
-    if (!username || !email || !password || !confirmPassword) {
+  const handleRegister = async () => {
+    if (!username.trim() || !email.trim() || !password || !confirmPassword) {
       return toast.warning("Vui lòng nhập đầy đủ thông tin");
     }
 
-    const emailClean = email.trim();
-
     const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+
     if (!passwordRegex.test(password)) {
       return toast.warning("Mật khẩu phải >= 8 ký tự, gồm chữ + số");
     }
@@ -46,29 +38,10 @@ const Register = () => {
     }
 
     try {
-      await sendVerificationCode({ email: emailClean });
-
-      toast.success("Đã gửi mã xác thực");
-
-      setVerificationCode(""); // 🔥 reset tránh lỗi cũ
-      setStep("verify");
-    } catch (err) {
-      toast.error("Không thể gửi mã xác thực");
-    }
-  };
-
-  // ================= VERIFY + REGISTER =================
-  const handleVerifyAndRegister = async () => {
-    if (!verificationCode.trim()) {
-      return toast.warning("Nhập mã xác thực");
-    }
-
-    try {
       const res = await registerUser({
         username: username.trim(),
         email: email.trim(),
         password,
-        code: verificationCode.trim(),
       });
 
       toast.success(res.data.message);
@@ -81,93 +54,69 @@ const Register = () => {
     }
   };
 
-  // ================= UI =================
   return (
     <div className="auth-container">
       <div className="auth-card">
-
         <h2 className="auth-title">Đăng Ký</h2>
 
-        {step === "form" ? (
-          <>
-            <input
-              type="text"
-              placeholder="Họ tên"
-              className="auth-input"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
+        <input
+          type="text"
+          placeholder="Họ tên"
+          className="auth-input"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
 
-            <input
-              type="email"
-              placeholder="Email"
-              className="auth-input"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+        <input
+          type="email"
+          placeholder="Email"
+          className="auth-input"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
-            <div className="input-with-toggle">
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Mật khẩu"
-                className="auth-input"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+        <div className="input-with-toggle">
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Mật khẩu"
+            className="auth-input"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
 
-              <button
-                type="button"
-                className="toggle-button"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? "ẨN" : "HIỆN"}
-              </button>
-            </div>
+          <button
+            type="button"
+            className="toggle-button"
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? "ẨN" : "HIỆN"}
+          </button>
+        </div>
 
-            <div className="input-with-toggle">
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Xác nhận mật khẩu"
-                className="auth-input"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
+        <div className="input-with-toggle">
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Xác nhận mật khẩu"
+            className="auth-input"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
 
-              <button
-                type="button"
-                className="toggle-button"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? "ẨN" : "HIỆN"}
-              </button>
-            </div>
+          <button
+            type="button"
+            className="toggle-button"
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? "ẨN" : "HIỆN"}
+          </button>
+        </div>
 
-            <button className="auth-button" onClick={handleSendCode}>
-              Gửi mã xác thực
-            </button>
-          </>
-        ) : (
-          <>
-            <input
-              type="text"
-              placeholder="Nhập mã xác thực đã gửi email"
-              className="auth-input"
-              value={verificationCode}
-              onChange={(e) => setVerificationCode(e.target.value)}
-            />
-
-            <button className="auth-button" onClick={handleVerifyAndRegister}>
-              Xác nhận & Đăng ký
-            </button>
-
-            <p
-              style={{ cursor: "pointer", color: "#007bff", marginTop: 10 }}
-              onClick={() => setStep("form")}
-            >
-              ← Quay lại
-            </p>
-          </>
-        )}
+        <button
+          className="auth-button"
+          onClick={handleRegister}
+        >
+          Đăng ký
+        </button>
 
         <p className="auth-link">
           Đã có tài khoản? <Link to="/login">Đăng nhập</Link>

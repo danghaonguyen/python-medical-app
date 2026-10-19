@@ -19,8 +19,6 @@ class User(db.Model):
         nullable=False,
     )
     username = db.Column(db.String(100), nullable=True)
-    reset_code = db.Column(db.String(10), nullable=True)
-    reset_code_expiry = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(
     db.DateTime,
     nullable=False,

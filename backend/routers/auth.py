@@ -1,31 +1,34 @@
 
-from datetime import datetime, timedelta
-from secrets import randbelow
-
-from flask import Blueprint, jsonify, request, session
+import os
+import secrets
+from flask import Blueprint, jsonify, request, session, current_app, redirect, url_for
 from pydantic import ValidationError
 from werkzeug.security import check_password_hash, generate_password_hash
-
+from authlib.integrations.flask_client import OAuth
 from database.database import db
 from database_models.models_user import User
 from schemas.schemas_user import (
-    PasswordReset,
-    PasswordResetRequest,
-    PasswordResetVerify,
     UserLogin,
     UserRegister,
 )
-from services.email_service import send_email
-
 
 auth_bp = Blueprint("auth", __name__)
 
+oauth = OAuth()
 
 # ================== HELPER ==================
 
-def clean(value):
-    return str(value).strip().lower() if value is not None else None
-
+def init_google_oauth(app):
+    oauth.init_app(app)
+    oauth.register(
+        name="google",
+        client_id=os.getenv("GOOGLE_CLIENT_ID"),
+        client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+        server_metadata_url=(
+            "https://accounts.google.com/.well-known/openid-configuration"
+        ),
+        client_kwargs={"scope": "openid email profile"},
+    )
 
 def get_user_by_email(email):
     return User.query.filter_by(email=email).first()
@@ -34,10 +37,6 @@ def get_user_by_email(email):
 def get_json_data():
     data = request.get_json(silent=True)
     return data if isinstance(data, dict) else None
-
-
-def generate_code():
-    return f"{randbelow(900000) + 100000}"
 
 
 def validate_request(schema, data):
@@ -77,43 +76,6 @@ def validate_request(schema, data):
         )
 
 
-# ================== SEND VERIFICATION CODE ==================
-
-@auth_bp.route("/send_verification_code", methods=["POST"])
-def send_verification_code():
-    data = get_json_data()
-
-    validated, error_response = validate_request(
-        PasswordResetRequest,
-        data,
-    )
-    if error_response:
-        return error_response
-
-    email = validated.email
-    code = generate_code()
-
-    try:
-        send_email(
-            email,
-            "Mã xác thực",
-            f"Mã của bạn là: {code}",
-        )
-    except Exception:
-        return jsonify({
-            "message": "Không thể gửi email xác thực"
-        }), 500
-
-    # Chỉ lưu mã sau khi gửi email thành công.
-    session["verify_email"] = email
-    session["verify_code"] = code
-    session.modified = True
-
-    return jsonify({
-        "message": "Đã gửi mã xác thực"
-    }), 200
-
-
 # ================== REGISTER ==================
 
 @auth_bp.route("/register", methods=["POST"])
@@ -127,16 +89,6 @@ def register():
     username = validated.username.strip()
     email = validated.email
     password = validated.password
-    code = validated.code
-
-    # Mã xác thực phải thuộc email đã yêu cầu gửi mã.
-    if (
-        session.get("verify_email") != email
-        or clean(session.get("verify_code")) != code
-    ):
-        return jsonify({
-            "message": "Mã xác thực không đúng"
-        }), 400
 
     if get_user_by_email(email):
         return jsonify({
@@ -152,9 +104,6 @@ def register():
     try:
         db.session.add(user)
         db.session.commit()
-
-        session.pop("verify_email", None)
-        session.pop("verify_code", None)
 
     except Exception:
         db.session.rollback()
@@ -198,6 +147,85 @@ def login():
         "username": user.username,
     }), 200
 
+# ================== GOOGLE AUTH ==================
+
+@auth_bp.route("/google", methods=["GET"])
+def google_login():
+    redirect_uri = url_for(
+        "auth.google_callback",
+        _external=True,
+    )
+    return oauth.google.authorize_redirect(redirect_uri)
+
+
+@auth_bp.route("/google/callback", methods=["GET"])
+def google_callback():
+    token = oauth.google.authorize_access_token()
+    user_info = token.get("userinfo")
+
+    if not user_info:
+        return jsonify({"message": "Không lấy được thông tin Google"}), 400
+
+    email = user_info.get("email")
+    email_verified = user_info.get("email_verified", False)
+    google_name = user_info.get("name") or user_info.get("given_name") or "Google User"
+
+    if not email or not email_verified:
+        return jsonify({
+            "message": "Google chưa xác minh địa chỉ email",
+        }), 400
+
+    user = get_user_by_email(email)
+
+    if not user:
+        user = User(
+            username=google_name,
+            email=email,
+            password=generate_password_hash(secrets.token_urlsafe(32)),
+        )
+        try:
+            db.session.add(user)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            current_app.logger.exception("Google account creation failed")
+            return jsonify({"message": "Không thể tạo tài khoản Google"}), 500
+
+    session.clear()
+    session["user_id"] = user.id
+    session["username"] = user.username
+
+    return redirect("http://127.0.0.1:3000/")
+
+
+# ================== CURRENT USER ==================
+
+@auth_bp.route("/me", methods=["GET"])
+def get_current_user():
+    user_id = session.get("user_id")
+
+    if not user_id:
+        return jsonify({
+            "authenticated": False,
+            "message": "Chưa đăng nhập",
+        }), 401
+
+    user = db.session.get(User, user_id)
+
+    if not user:
+        session.clear()
+        return jsonify({
+            "authenticated": False,
+            "message": "Tài khoản không tồn tại",
+        }), 401
+
+    return jsonify({
+        "authenticated": True,
+        "user_id": user.id,
+        "username": user.username,
+        "email": user.email,
+    }), 200
+
 
 # ================== LOGOUT ==================
 
@@ -209,145 +237,3 @@ def logout():
         "message": "Đã đăng xuất"
     }), 200
 
-
-# ================== SEND PASSWORD RESET ==================
-
-@auth_bp.route("/send_password_reset", methods=["POST"])
-def send_password_reset():
-    data = get_json_data()
-
-    validated, error_response = validate_request(
-        PasswordResetRequest,
-        data,
-    )
-    if error_response:
-        return error_response
-
-    email = validated.email
-    user = get_user_by_email(email)
-
-    if not user:
-        return jsonify({
-            "message": "Email không tồn tại"
-        }), 404
-
-    reset_code = generate_code()
-    expiry = datetime.now() + timedelta(minutes=15)
-
-    try:
-        send_email(
-            email,
-            "Reset mật khẩu",
-            f"Mã đặt lại mật khẩu của bạn là: {reset_code}",
-        )
-
-        user.reset_code = reset_code
-        user.reset_code_expiry = expiry
-        db.session.commit()
-
-    except Exception:
-        db.session.rollback()
-        return jsonify({
-            "message": "Không thể gửi mã đặt lại mật khẩu"
-        }), 500
-
-    return jsonify({
-        "message": "Đã gửi mã reset"
-    }), 200
-
-
-# ================== VERIFY RESET CODE ==================
-
-@auth_bp.route("/verify_reset_code", methods=["POST"])
-def verify_reset_code():
-    data = get_json_data()
-
-    validated, error_response = validate_request(
-        PasswordResetVerify,
-        data,
-    )
-    if error_response:
-        return error_response
-
-    email = validated.email
-    code = validated.code
-
-    user = get_user_by_email(email)
-
-    if not user:
-        return jsonify({
-            "message": "Email không tồn tại"
-        }), 404
-
-    if not user.reset_code:
-        return jsonify({
-            "message": "Chưa có mã xác thực"
-        }), 400
-
-    if clean(user.reset_code) != code:
-        return jsonify({
-            "message": "Sai mã xác thực"
-        }), 400
-
-    if (
-        not user.reset_code_expiry
-        or datetime.now() > user.reset_code_expiry
-    ):
-        return jsonify({
-            "message": "Mã đã hết hạn"
-        }), 400
-
-    return jsonify({
-        "message": "OK"
-    }), 200
-
-
-# ================== RESET PASSWORD ==================
-
-@auth_bp.route("/reset_password", methods=["POST"])
-def reset_password():
-    data = get_json_data()
-
-    validated, error_response = validate_request(PasswordReset, data)
-    if error_response:
-        return error_response
-
-    email = validated.email
-    code = validated.code
-    new_password = validated.new_password
-
-    user = get_user_by_email(email)
-
-    if not user:
-        return jsonify({
-            "message": "Email không tồn tại"
-        }), 404
-
-    if not user.reset_code or clean(user.reset_code) != code:
-        return jsonify({
-            "message": "Sai mã xác thực"
-        }), 400
-
-    if (
-        not user.reset_code_expiry
-        or datetime.now() > user.reset_code_expiry
-    ):
-        return jsonify({
-            "message": "Mã đã hết hạn"
-        }), 400
-
-    try:
-        user.password = generate_password_hash(new_password)
-        user.reset_code = None
-        user.reset_code_expiry = None
-        db.session.commit()
-
-    except Exception:
-        db.session.rollback()
-        return jsonify({
-            "message": "Không thể đổi mật khẩu"
-        }), 500
-
-    return jsonify({
-        "message": "Đổi mật khẩu thành công"
-    }), 200

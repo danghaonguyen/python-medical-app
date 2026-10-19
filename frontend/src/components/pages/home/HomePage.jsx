@@ -1,6 +1,4 @@
 import { useEffect } from "react";
-import HeaderTop from "../layout/HeaderTop";
-import Navbar from "../layout/Navbar";
 import Slider from "./Slider";
 import Features from "./Features";
 import About from "./About";
@@ -23,8 +21,7 @@ const HomePage = () => {
 
   return (
     <div className="home-page">
-      <HeaderTop />
-      <Navbar />
+
       <div id="slider"><Slider /></div>
       <div id="features"><Features /></div>
       <div id="about"><About /></div>

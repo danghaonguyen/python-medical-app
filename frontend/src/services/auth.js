@@ -8,7 +8,6 @@ export async function registerUser(data) {
     username: data.username,
     email: data.email,
     password: data.password,
-    code: data.code,
   });
 }
 
@@ -19,37 +18,15 @@ export async function loginUser(data) {
   });
 }
 
-export async function sendVerificationCode(data) {
-  return api.post("/send_verification_code", {
-    email: data.email,
-  });
-}
-
-export async function sendPasswordResetEmail(data) {
-  return api.post("/send_password_reset", {
-    email: data.email,
-  });
-}
-
-export async function verifyResetCode(data) {
-  return api.post("/verify_reset_code", {
-    email: data.email,
-    code: data.code,
-  });
-}
-
-export async function resetPassword(data) {
-  return api.post("/reset_password", {
-    email: data.email,
-    code: data.code,
-    new_password: data.new_password,
-  });
-}
-
 export async function logoutUser() {
+  await api.post("/auth/logout");
   localStorage.removeItem("user_id");
   localStorage.removeItem("username");
-  await api.post("auth/logout");
+}
+
+export async function getCurrentUser() {
+  const response = await api.get("/auth/me");
+  return response.data;
 }
 
 export function getUserId() {
