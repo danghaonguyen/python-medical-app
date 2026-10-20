@@ -51,7 +51,7 @@ const HomePage = () => {
                   <span aria-hidden="true">→</span>
                 </Link>
 
-                <a href="#intrust" className="home-secondary-button">
+                <a href="/intrust" className="home-secondary-button">
                   Xem hướng dẫn
                 </a>
               </div>
