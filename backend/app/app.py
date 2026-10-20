@@ -17,12 +17,11 @@ CORS(
     app,
     origins=[
         "http://127.0.0.1:3000",
-        "https://haonguyen-medicalai.vercel.app"
+        "https://medicaiapp.vercel.app"
     ],
     allow_headers=["Content-Type", "Authorization"],
     methods=["GET", "POST", "DELETE", "OPTIONS"],
 )
-# https://haonguyen-medicalai.vercel.app
 
 app.register_blueprint(auth_bp, url_prefix="/auth")
 app.register_blueprint(history_bp)
