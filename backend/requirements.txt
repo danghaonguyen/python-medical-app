@@ -25,4 +25,5 @@ xgboost==3.2.0
 imbalanced-learn==0.13.0
 authlib==1.9.1
 gunicorn
+jwt
 requests
