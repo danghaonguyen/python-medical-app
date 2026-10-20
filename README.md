@@ -17,12 +17,9 @@ Hệ thống gồm ba thành phần chính:
 ## ✨ Chức năng chính
 
 ### 1. Quản lý tài khoản
-
+- Tài khoản test: haonguyen@gmail.com | 250303nguyen
 - Đăng ký tài khoản bằng email.
-- Xác minh email thông qua mã OTP.
 - Đăng nhập và đăng xuất.
-- Gửi mã xác minh để đặt lại mật khẩu.
-- Xác minh mã đặt lại mật khẩu và thiết lập mật khẩu mới.
 
 ### 2. Dự đoán nguy cơ mắc bệnh tiểu đường
 
@@ -136,6 +133,7 @@ python-medical/
 │   │   └── schemas_user.py
 │   │
 │   ├── services/
+│   │   ├── auth_middleware.py
 │   │   └── prediction_service.py
 │   │
 │   └── tests/
@@ -168,7 +166,7 @@ python-medical/
 | `models/` | Lưu các mô hình Machine Learning và scaler đã huấn luyện |
 | `routers/` | Khai báo các API endpoints |
 | `schemas/` | Định nghĩa và xác thực dữ liệu đầu vào/đầu ra |
-| `services/` | Xử lý nghiệp vụ như dự đoán và gửi email |
+| `services/` | Xử lý nghiệp vụ như dự đoán |
 | `tests/` | Chứa các bài kiểm thử tự động |
 
 ### Các bộ dữ liệu
