@@ -1,11 +1,13 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import { predictDiabetes } from "../../../services/api";
 import Footer from "../layout/Footer";
+import Navbar from "../layout/Navbar";
 import PredictionChart from "./PredictionChart";
 import "../css/PatientForm.css";
-
+import "../css/Navbar.css";
 
 const initialFormData = {
   age: "",
@@ -25,27 +27,27 @@ const initialFormData = {
 const labels = {
   age: "Tuổi",
   gender: "Giới tính",
-  pulse_rate: "Nhịp tim (nhịp/phút - bpm)",
+  pulse_rate: "Nhịp tim (bpm)",
   systolic_bp: "Huyết áp tâm thu (mmHg)",
   diastolic_bp: "Huyết áp tâm trương (mmHg)",
   glucose: "Chỉ số đường huyết (mmol/L)",
-  height: "Chiều cao (m) - ví dụ: 1.68",
+  height: "Chiều cao (m)",
   weight: "Cân nặng (kg)",
   bmi: "Chỉ số BMI (kg/m²)",
-  family_diabetes: "Tiền sử gia đình",
-  hypertensive: "Tăng huyết áp",
-  family_hypertension: "Tiền sử cao huyết áp trong gia đình",
+  family_diabetes: "Tiền sử tiểu đường gia đình",
+  hypertensive: "Bản thân bị tăng huyết áp",
+  family_hypertension: "Tiền sử cao huyết áp gia đình",
 };
 
 const placeholders = {
-  age: "Nhập tuổi",
+  age: "Ví dụ: 25",
   gender: "",
-  pulse_rate: "Nhập nhịp tim",
-  systolic_bp: "Nhập huyết áp tâm thu",
-  diastolic_bp: "Nhập huyết áp tâm trương",
+  pulse_rate: "Ví dụ: 75",
+  systolic_bp: "Ví dụ: 120",
+  diastolic_bp: "Ví dụ: 80",
   glucose: "Nhập chỉ số đường huyết",
-  height: "Nhập chiều cao (m) ví dụ 1.70",
-  weight: "Nhập cân nặng (kg)",
+  height: "Ví dụ: 1.70",
+  weight: "Ví dụ: 65",
   bmi: "",
   family_diabetes: "",
   hypertensive: "",
@@ -58,10 +60,50 @@ const booleanFields = [
   "family_hypertension",
 ];
 
+const fieldGroups = [
+  {
+    title: "Thông tin cơ bản",
+    description: "Thông tin cá nhân của người được đánh giá.",
+    fields: ["age", "gender"],
+  },
+  {
+    title: "Chỉ số cơ thể",
+    description: "Nhập chiều cao và cân nặng để tính BMI tự động.",
+    fields: ["height", "weight", "bmi"],
+  },
+  {
+    title: "Chỉ số sức khỏe",
+    description: "Các chỉ số đường huyết, nhịp tim và huyết áp.",
+    fields: [
+      "glucose",
+      "pulse_rate",
+      "systolic_bp",
+      "diastolic_bp",
+    ],
+  },
+  {
+    title: "Tiền sử sức khỏe",
+    description: "Thông tin về tiền sử bệnh cá nhân và gia đình.",
+    fields: [
+      "family_diabetes",
+      "hypertensive",
+      "family_hypertension",
+    ],
+  },
+];
+
 function PatientForm() {
   const [formData, setFormData] = useState(initialFormData);
   const [result, setResult] = useState(null);
   const [showChart, setShowChart] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!localStorage.getItem("access_token")) {
+      toast.warning("Bạn cần đăng nhập để sử dụng chức năng này!");
+      setTimeout(() => navigate("/login"), 2000);
+    }
+  }, [navigate]);
 
   const handleReset = () => {
     setFormData(initialFormData);
@@ -133,7 +175,6 @@ function PatientForm() {
 
     try {
       const response = await predictDiabetes(numericData);
-
       setResult(response);
     } catch (error) {
       toast.error(
@@ -157,7 +198,9 @@ function PatientForm() {
           required
         >
           <option value="">
-            {key === "gender" ? "-- Chọn giới tính --" : "-- Chọn --"}
+            {key === "gender"
+              ? "-- Chọn giới tính --"
+              : "-- Chọn câu trả lời --"}
           </option>
 
           {key === "gender" ? (
@@ -194,41 +237,99 @@ function PatientForm() {
   return (
     <>
       <ToastContainer position="top-center" autoClose={3000} />
+      <Navbar />
 
-      <div className="patient-form-container">
-        <h2 className="form-title">
-          🩺 DỰ ĐOÁN NGUY CƠ BỆNH TIỂU ĐƯỜNG
-        </h2>
+      <main className="patient-form-container">
+        <div className="form-page-heading">
 
-        <p className="form-subtitle">
-          Nhập các chỉ số theo yêu cầu để bắt đầu dự đoán
-        </p>
+          <p className="form-eyebrow">MEDICAL HEALTH ASSESSMENT</p>
+
+          <h2 className="form-title">
+            Dự đoán nguy cơ bệnh tiểu đường
+          </h2>
+
+          <p className="form-subtitle">
+            Nhập các chỉ số sức khỏe để hệ thống phân tích và đưa ra
+            kết quả dự đoán.
+          </p>
+        </div>
+
+        <div className="form-notice">
+          <span className="notice-icon" aria-hidden="true">
+            i
+          </span>
+          <p>
+            Vui lòng cung cấp thông tin chính xác. Kết quả dự đoán
+            chỉ mang tính tham khảo, không thay thế chẩn đoán y khoa.
+          </p>
+        </div>
 
         <form onSubmit={handleSubmit} className="form-grid">
-          {Object.keys(formData).map(renderField)}
+          {fieldGroups.map((group, index) => (
+            <section className="form-section" key={group.title}>
+              <div className="form-section-heading">
+                <span className="form-section-number">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+
+                <div>
+                  <h3>{group.title}</h3>
+                  <p>{group.description}</p>
+                </div>
+              </div>
+
+              <div className="form-section-grid">
+                {group.fields.map(renderField)}
+              </div>
+            </section>
+          ))}
 
           <div className="form-actions">
-            <button type="submit" className="submit-button">
-              🔍 Dự đoán
-            </button>
-
             <button
               type="button"
               onClick={handleReset}
               className="reset-button"
             >
-              ✨ Nhập lại
+              Nhập lại
+            </button>
+
+            <button type="submit" className="submit-button">
+              Dự đoán nguy cơ
+              <span aria-hidden="true">→</span>
             </button>
           </div>
         </form>
 
         {result && (
-          <div className="result-box">
-            <h4>🎯 Kết quả dự đoán</h4>
+          <section className="result-box" aria-live="polite">
+            <div className="result-heading">
+              <div>
+                <p className="result-eyebrow">PREDICTION SUMMARY</p>
+                <h3>Kết quả dự đoán</h3>
+              </div>
 
-            <p>🎯 Mức nguy cơ: {result.risk_level}</p>
-            <p>
-              📊 Xác suất: {(result.probability * 100).toFixed(2)}%
+              <span className="result-icon" aria-hidden="true">
+                ✓
+              </span>
+            </div>
+
+            <div className="result-details">
+              <div className="result-detail-card">
+                <span>Mức nguy cơ</span>
+                <strong>{result.risk_level}</strong>
+              </div>
+
+              <div className="result-detail-card">
+                <span>Xác suất mô hình</span>
+                <strong>
+                  {(result.probability * 100).toFixed(2)}%
+                </strong>
+              </div>
+            </div>
+
+            <p className="result-disclaimer">
+              Kết quả do mô hình ước tính dựa trên dữ liệu đã nhập,
+              không phải kết luận chẩn đoán lâm sàng.
             </p>
 
             {!showChart && (
@@ -237,7 +338,8 @@ function PatientForm() {
                 onClick={() => setShowChart(true)}
                 className="compare-chart-button"
               >
-                📊 Xem biểu đồ so sánh
+                Xem biểu đồ so sánh
+                <span aria-hidden="true">→</span>
               </button>
             )}
 
@@ -247,9 +349,9 @@ function PatientForm() {
                 onClose={() => setShowChart(false)}
               />
             )}
-          </div>
+          </section>
         )}
-      </div>
+      </main>
 
       <Footer />
     </>

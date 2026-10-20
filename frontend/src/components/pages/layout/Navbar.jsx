@@ -1,64 +1,29 @@
-import { useState, useEffect } from "react";
-import { FiChevronDown } from "react-icons/fi";
+import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import {
+  FiChevronDown,
+  FiClock,
+  FiLogOut,
+  FiHome,
+  FiBookOpen,
+  FiActivity,
+  FiUser,
+} from "react-icons/fi";
+import { logoutUser } from "../../../services/auth";
 import "../css/Navbar.css";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-
-const API_URL = "http://127.0.0.1:5000";
 
 const navItems = [
-  { text: "TRANG CHỦ", path: "/", targetId: "home", icon: "lni-home" },
-  { text: "HƯỚNG DẪN", path: "/", targetId: "intrust", icon: "lni-book" },
+  { text: "Trang chủ", path: "/", targetId: "home", Icon: FiHome },
+  { text: "Hướng dẫn", path: "/", targetId: "intrust", Icon: FiBookOpen },
 ];
 
 function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
-
-  const [user, setUser] = useState(null);
+  const username = localStorage.getItem("username");
+  const token = localStorage.getItem("access_token");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-
-  // Kiểm tra trạng thái đăng nhập từ Flask session
-  useEffect(() => {
-  let cancelled = false;
-
-  const checkSession = async () => {
-    try {
-      const response = await fetch(`${API_URL}/auth/me`, {
-        method: "GET",
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        if (!cancelled) setUser(null);
-        return;
-      }
-
-      const data = await response.json();
-
-      if (!cancelled) {
-        setUser(
-          data.authenticated
-            ? {
-                userId: data.user_id,
-                username: data.username,
-              }
-            : null
-        );
-      }
-    } catch (error) {
-      console.error("Không thể kiểm tra phiên đăng nhập:", error);
-
-      if (!cancelled) setUser(null);
-    }
-  };
-
-  checkSession();
-
-  return () => {
-    cancelled = true;
-  };
-}, [location.key]);
 
   const closeMenus = () => {
     setIsMenuOpen(false);
@@ -67,15 +32,12 @@ function Navbar() {
 
   const handlePredictClick = () => {
     closeMenus();
-
-    if (location.pathname !== "/prediction") {
-      navigate("/prediction");
-    }
+    if (location.pathname === "/prediction") window.location.reload();
+    else navigate("/prediction");
   };
 
   const scrollTo = (path, targetId) => {
     closeMenus();
-
     if (window.location.pathname === path) {
       document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth" });
     } else {
@@ -84,38 +46,27 @@ function Navbar() {
     }
   };
 
-const handleLogout = async () => {
-  closeMenus();
-
-  try {
-    const response = await fetch(`${API_URL}/auth/logout`, {
-      method: "POST",
-      credentials: "include",
-    });
-
-    if (!response.ok) {
-      throw new Error("Đăng xuất thất bại");
-    }
-  } catch (error) {
-    console.error("Lỗi đăng xuất:", error);
-  } finally {
-    setUser(null);
-    localStorage.removeItem("user_id");
-    localStorage.removeItem("username");
-    navigate("/", { replace: true });
-  }
-};
+  const handleLogout = () => {
+    closeMenus();
+    logoutUser().catch(() => {});
+    navigate("/login");
+  };
 
   return (
     <header className="site-navbar">
       <div className="site-navbar-inner">
-        <Link
+        <a
           className="site-navbar-brand"
-          to="/"
+          href="/"
           aria-label="Medic Diabetes - Trang chủ"
         >
-          <img src="/assets/img/logo/logo.svg" alt="Medic Diabetes" />
-        </Link>
+          <img
+            src="/assets/img/logo/assistant.png"
+            alt="Health"
+            className="health-icon"
+          />
+          <h3>MEDICAL AI</h3>
+        </a>
 
         <button
           type="button"
@@ -134,30 +85,40 @@ const handleLogout = async () => {
           aria-label="Điều hướng chính"
         >
           <div className="site-nav-links">
-            {navItems.map((item) => (
-              <button
-                type="button"
-                className="site-nav-link"
-                key={item.text}
-                onClick={() => scrollTo(item.path, item.targetId)}
-              >
-                <i className={`lni ${item.icon}`} aria-hidden="true"></i>
-                <span>{item.text}</span>
-              </button>
-            ))}
+            {navItems.map((item) => {
+              const Icon = item.Icon;
 
-            {user && (
+              return (
+                <button
+                  type="button"
+                  className={`site-nav-link ${
+                    item.text === "Trang chủ" && location.pathname === "/"
+                      ? "is-active"
+                      : ""
+                  }`}
+                  key={item.text}
+                  onClick={() => scrollTo(item.path, item.targetId)}
+                >
+                  <Icon className="nav-link-icon" aria-hidden="true" />
+                  <span>{item.text}</span>
+                </button>
+              );
+            })}
+
+            {token && (
               <button
                 type="button"
-                className="site-nav-link"
+                className={`site-nav-link ${
+                  location.pathname === "/prediction" ? "is-active" : ""
+                }`}
                 onClick={handlePredictClick}
               >
-                <i className="lni lni-stats-up" aria-hidden="true"></i>
-                <span>DỰ ĐOÁN</span>
+                <FiActivity className="nav-link-icon" aria-hidden="true" />
+                <span>Dự đoán</span>
               </button>
             )}
 
-            {user ? (
+            {token ? (
               <div className="user-menu">
                 <button
                   type="button"
@@ -165,8 +126,8 @@ const handleLogout = async () => {
                   aria-expanded={isUserMenuOpen}
                   onClick={() => setIsUserMenuOpen((open) => !open)}
                 >
-                  <i className="lni lni-user" aria-hidden="true"></i>
-                  <span>{user.username || user.userId}</span>
+                  <FiUser className="nav-link-icon" aria-hidden="true" />
+                  <span>{username}</span>
                   <FiChevronDown
                     className="user-menu-arrow"
                     aria-hidden="true"
@@ -182,11 +143,17 @@ const handleLogout = async () => {
                         navigate("/history");
                       }}
                     >
-                      📊 Lịch sử dự đoán
+                      <FiClock aria-hidden="true" />
+                      <span>Lịch sử dự đoán</span>
                     </button>
 
-                    <button type="button" onClick={handleLogout}>
-                      🚪 Đăng xuất
+                    <button
+                      type="button"
+                      className="user-menu-logout"
+                      onClick={handleLogout}
+                    >
+                      <FiLogOut aria-hidden="true" />
+                      <span>Đăng xuất</span>
                     </button>
                   </div>
                 )}
@@ -194,14 +161,14 @@ const handleLogout = async () => {
             ) : (
               <button
                 type="button"
-                className="site-nav-link"
+                className="site-nav-link nav-login"
                 onClick={() => {
                   closeMenus();
                   navigate("/login");
                 }}
               >
-                <i className="lni lni-user" aria-hidden="true"></i>
-                <span>ĐĂNG NHẬP</span>
+                <FiUser className="nav-link-icon" aria-hidden="true" />
+                <span>Đăng nhập</span>
               </button>
             )}
           </div>

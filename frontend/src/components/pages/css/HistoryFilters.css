@@ -1,0 +1,224 @@
+/* ==================================================
+   HISTORY FILTERS
+================================================== */
+
+.filter-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+}
+
+.filter-select {
+  min-width: 0;
+  width: 100%;
+}
+
+/* ==================================================
+   REACT SELECT - CONTAINER
+================================================== */
+
+.filter-select .history-filter-container {
+  width: 100%;
+  min-width: 0;
+  font-family: "Poppins", sans-serif;
+  font-size: 14px;
+}
+
+/* ==================================================
+   SELECT CONTROL
+================================================== */
+
+.filter-select .history-filter__control {
+  box-sizing: border-box;
+  min-height: 40px;
+  border: 1px solid #d5e0e8;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: none;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.filter-select .history-filter__control:hover {
+  border-color: #a9c5ce;
+}
+
+.filter-select .history-filter__control--is-focused {
+  border-color: #287b83;
+  box-shadow: 0 0 0 3px rgba(40, 123, 131, 0.12);
+}
+
+.filter-select .history-filter__control--is-disabled {
+  background: #f1f5f8;
+  cursor: not-allowed;
+}
+
+/* ==================================================
+   SELECT VALUE AND PLACEHOLDER
+================================================== */
+
+.filter-select .history-filter__value-container {
+  min-width: 0;
+  padding: 4px 11px;
+}
+
+.filter-select .history-filter__single-value {
+  overflow: hidden;
+  color: #34475a;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filter-select .history-filter__placeholder {
+  overflow: hidden;
+  margin: 0;
+  color: #8495a7;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filter-select .history-filter__input-container {
+  margin: 0;
+  padding: 0;
+  color: #34475a;
+  font-size: 14px;
+}
+
+.filter-select .history-filter__input {
+  color: #34475a;
+}
+
+/* ==================================================
+   SELECT INDICATORS
+================================================== */
+
+.filter-select .history-filter__indicators {
+  flex-shrink: 0;
+}
+
+.filter-select .history-filter__indicator {
+  padding: 7px;
+  color: #71869a;
+}
+
+.filter-select .history-filter__indicator:hover {
+  color: #287b83;
+}
+
+.filter-select .history-filter__indicator-separator {
+  margin-top: 9px;
+  margin-bottom: 9px;
+  background: #e2e8ef;
+}
+
+.filter-select .history-filter__clear-indicator:hover {
+  color: #b83232;
+}
+
+/* ==================================================
+   DROPDOWN MENU
+================================================== */
+
+.filter-select .history-filter__menu {
+  z-index: 30;
+  margin-top: 6px;
+  overflow: hidden;
+  border: 1px solid #e2e8ef;
+  border-radius: 9px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(24, 59, 86, 0.12);
+}
+
+.filter-select .history-filter__menu-list {
+  max-height: 240px;
+  padding: 5px;
+}
+
+.filter-select .history-filter__option {
+  padding: 9px 11px;
+  border-radius: 5px;
+  color: #34475a;
+  font-size: 14px;
+  line-height: 1.5;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.filter-select .history-filter__option--is-focused {
+  background: #edf6f7;
+  color: #075985;
+}
+
+.filter-select .history-filter__option--is-selected {
+  background: #075985;
+  color: #ffffff;
+}
+
+.filter-select
+  .history-filter__option--is-selected.history-filter__option--is-focused {
+  background: #075985;
+  color: #ffffff;
+}
+
+.filter-select .history-filter__option:active {
+  background: #dceff1;
+  color: #075985;
+}
+
+/* ==================================================
+   RESPONSIVE: TABLET
+================================================== */
+
+@media (max-width: 900px) {
+  .filter-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 15px;
+  }
+}
+
+/* ==================================================
+   RESPONSIVE: MOBILE
+================================================== */
+
+@media (max-width: 600px) {
+  .filter-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 13px;
+  }
+
+  .filter-select .history-filter__control {
+    min-height: 40px;
+  }
+
+  .filter-select .history-filter__single-value,
+  .filter-select .history-filter__placeholder {
+    font-size: 14px;
+  }
+
+  .filter-select .history-filter__menu-list {
+    max-height: 200px;
+  }
+
+  .filter-select .history-filter__option {
+    padding: 10px 11px;
+  }
+}
+
+/* ==================================================
+   REDUCED MOTION
+================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .filter-select .history-filter__control,
+  .filter-select .history-filter__option {
+    transition: none;
+  }
+}

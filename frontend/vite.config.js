@@ -11,6 +11,7 @@ export default defineConfig(({ mode }) => {
       host: env.HOST || "127.0.0.1",
       port: Number(env.PORT) || 3000,
       proxy: {
+        // Tự động chuyển tất cả request /api sang Backend Flask 127.0.0.1:5000 mà không bao giờ bị lỗi CORS
         "/api": {
           target: "http://127.0.0.1:5000",
           changeOrigin: true,

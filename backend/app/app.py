@@ -1,28 +1,26 @@
 from flask import Flask, jsonify
 from flask_migrate import Migrate
-
 from database.database import db
 from database.config import Config
 from database_models import User, Prediction
-from routers.auth import auth_bp
 from routers.history import history_bp
 from routers.predict import predict_bp
 from flask_cors import CORS
-from routers.auth import auth_bp, init_google_oauth
+from routers.auth import auth_bp
 
 app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
-init_google_oauth(app)
 migrate = Migrate(app, db)
 
 CORS(
     app,
-    supports_credentials=True,
     origins=[
         "http://127.0.0.1:3000",
-        "http://127.0.0.1:5000/auth/google/callback"
+        "https://haonguyen-medicalai.vercel.app"
     ],
+    allow_headers=["Content-Type", "Authorization"],
+    methods=["GET", "POST", "DELETE", "OPTIONS"],
 )
 # https://haonguyen-medicalai.vercel.app
 

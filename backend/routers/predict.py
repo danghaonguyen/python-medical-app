@@ -1,7 +1,8 @@
 
 import logging
 
-from flask import Blueprint, jsonify, request, session
+from flask import Blueprint, jsonify, request
+from services.auth_middleware import token_required
 
 from database.database import db
 from database_models.models_prediction import Prediction
@@ -99,6 +100,7 @@ def save_prediction(prediction):
 
 
 @predict_bp.route("/predict", methods=["POST"])
+@token_required
 def predict():
     # 1. Nhận JSON từ Postman hoặc frontend.
     data = request.get_json(silent=True)
@@ -108,13 +110,8 @@ def predict():
             "message": "Dữ liệu JSON không hợp lệ"
         }), 400
 
-    # 2. Kiểm tra người dùng đã đăng nhập chưa.
-    user_id = session.get("user_id")
-
-    if not user_id:
-        return jsonify({
-            "message": "Vui lòng đăng nhập để dự đoán"
-        }), 401
+   # 2. Lấy user_id từ token đã xác minh.
+    user_id = request.user_id
 
     # 3. Kiểm tra dữ liệu bằng Pydantic.
     try:

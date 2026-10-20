@@ -1,10 +1,11 @@
 
-import os
-import secrets
-from flask import Blueprint, jsonify, request, session, current_app, redirect, url_for
+from datetime import datetime, timedelta, timezone
+
+import jwt
+from flask import Blueprint, jsonify, request, current_app
 from pydantic import ValidationError
 from werkzeug.security import check_password_hash, generate_password_hash
-from authlib.integrations.flask_client import OAuth
+
 from database.database import db
 from database_models.models_user import User
 from schemas.schemas_user import (
@@ -14,21 +15,8 @@ from schemas.schemas_user import (
 
 auth_bp = Blueprint("auth", __name__)
 
-oauth = OAuth()
 
 # ================== HELPER ==================
-
-def init_google_oauth(app):
-    oauth.init_app(app)
-    oauth.register(
-        name="google",
-        client_id=os.getenv("GOOGLE_CLIENT_ID"),
-        client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
-        server_metadata_url=(
-            "https://accounts.google.com/.well-known/openid-configuration"
-        ),
-        client_kwargs={"scope": "openid email profile"},
-    )
 
 def get_user_by_email(email):
     return User.query.filter_by(email=email).first()
@@ -74,6 +62,19 @@ def validate_request(schema, data):
             }),
             400,
         )
+
+
+def create_access_token(user):
+    payload = {
+        "user_id": user.id,
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=60),
+    }
+
+    return jwt.encode(
+        payload,
+        current_app.config["SECRET_KEY"],
+        algorithm="HS256",
+    )
 
 
 # ================== REGISTER ==================
@@ -136,94 +137,15 @@ def login():
             "message": "Email hoặc mật khẩu không đúng"
         }), 401
 
-    # Xóa session cũ trước khi tạo trạng thái đăng nhập mới.
-    session.clear()
-    session["user_id"] = user.id
-    session["username"] = user.username
+    access_token = create_access_token(user)
 
     return jsonify({
         "message": "Đăng nhập thành công",
+        "access_token": access_token,
+        "token_type": "Bearer",
+        "expires_in": 3600,
         "user_id": user.id,
         "username": user.username,
-    }), 200
-
-# ================== GOOGLE AUTH ==================
-
-@auth_bp.route("/google", methods=["GET"])
-def google_login():
-    redirect_uri = url_for(
-        "auth.google_callback",
-        _external=True,
-    )
-    return oauth.google.authorize_redirect(redirect_uri)
-
-
-@auth_bp.route("/google/callback", methods=["GET"])
-def google_callback():
-    token = oauth.google.authorize_access_token()
-    user_info = token.get("userinfo")
-
-    if not user_info:
-        return jsonify({"message": "Không lấy được thông tin Google"}), 400
-
-    email = user_info.get("email")
-    email_verified = user_info.get("email_verified", False)
-    google_name = user_info.get("name") or user_info.get("given_name") or "Google User"
-
-    if not email or not email_verified:
-        return jsonify({
-            "message": "Google chưa xác minh địa chỉ email",
-        }), 400
-
-    user = get_user_by_email(email)
-
-    if not user:
-        user = User(
-            username=google_name,
-            email=email,
-            password=generate_password_hash(secrets.token_urlsafe(32)),
-        )
-        try:
-            db.session.add(user)
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
-            current_app.logger.exception("Google account creation failed")
-            return jsonify({"message": "Không thể tạo tài khoản Google"}), 500
-
-    session.clear()
-    session["user_id"] = user.id
-    session["username"] = user.username
-
-    return redirect("http://127.0.0.1:3000/")
-
-
-# ================== CURRENT USER ==================
-
-@auth_bp.route("/me", methods=["GET"])
-def get_current_user():
-    user_id = session.get("user_id")
-
-    if not user_id:
-        return jsonify({
-            "authenticated": False,
-            "message": "Chưa đăng nhập",
-        }), 401
-
-    user = db.session.get(User, user_id)
-
-    if not user:
-        session.clear()
-        return jsonify({
-            "authenticated": False,
-            "message": "Tài khoản không tồn tại",
-        }), 401
-
-    return jsonify({
-        "authenticated": True,
-        "user_id": user.id,
-        "username": user.username,
-        "email": user.email,
     }), 200
 
 
@@ -231,9 +153,6 @@ def get_current_user():
 
 @auth_bp.route("/logout", methods=["POST"])
 def logout():
-    session.clear()
-
     return jsonify({
-        "message": "Đã đăng xuất"
+        "message": "Đăng xuất thành công"
     }), 200
-

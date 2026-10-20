@@ -1,17 +1,18 @@
+
 import { useMemo } from "react";
 import Select from "react-select";
 import { selectStyles } from "./historyFilterStyles";
+import "../css/HistoryFilters.css";
 
 const MONTHS = Array.from({ length: 12 }, (_, index) => ({
   value: String(index + 1),
   label: `Tháng ${index + 1}`,
 }));
 
-// Số ngày trong tháng, tự xử lý năm nhuận (tháng 2).
-const getDaysInMonth = (year, month) => new Date(year, month, 0).getDate();
+const getDaysInMonth = (year, month) =>
+  new Date(year, month, 0).getDate();
 
 function HistoryFilters({ filters, onChange, years }) {
-  // Chỉ tính lại khi năm/tháng đổi — tránh tạo mảng mới mỗi lần render.
   const days = useMemo(() => {
     const year = Number(filters.year?.value) || new Date().getFullYear();
     const month = Number(filters.month?.value) || 1;

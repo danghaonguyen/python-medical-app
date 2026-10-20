@@ -12,40 +12,31 @@ const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const userId = localStorage.getItem("user_id");
+    const token = localStorage.getItem("access_token");
 
-    if (userId) {
+    if (token) {
       navigate("/", { replace: true });
     }
   }, [navigate]);
 
-  // ================= LOGIN =================
   const handleLogin = async () => {
     if (!email.trim() || !password) {
       return toast.warning("Vui lòng nhập email và mật khẩu");
     }
 
     try {
-
       const res = await loginUser({
         email: email.trim(),
         password,
       });
 
-      toast.success(res.data.message);
-
-      localStorage.setItem("user_id", res.data.user_id);
-      localStorage.setItem("username", res.data.username);
-
-      setTimeout(() => navigate("/"), 1500);
+      toast.success(res.data.message || "Đăng nhập thành công");
+      setTimeout(() => {
+        navigate("/", { replace: true });
+      }, 1500);
     } catch (err) {
       toast.error(err.response?.data?.message || "Đăng nhập thất bại");
     }
-  };
-
-  // ================= GOOGLE LOGIN =================
-  const handleGoogleLogin = () => {
-    window.location.href = "http://127.0.0.1:5000/auth/google";
   };
 
   return (
@@ -79,21 +70,8 @@ const Login = () => {
           </button>
         </div>
 
-        <button
-          className="auth-button"
-          onClick={handleLogin}
-        >
-       Đăng Nhập
-        </button>
-
-        <div className="auth-divider">Hoặc</div>
-
-        <button
-          type="button"
-          className="auth-button google-button"
-          onClick={handleGoogleLogin}
-        >
-          Đăng nhập bằng Google
+        <button className="auth-button" onClick={handleLogin}>
+          Đăng nhập
         </button>
 
         <p className="auth-link">

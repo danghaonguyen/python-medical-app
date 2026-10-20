@@ -1,7 +1,5 @@
-import api from "./apiClient";
 
-// Mọi request đi qua instance `api` (apiClient.js): baseURL = /api (proxy Vite),
-// withCredentials = true để gửi kèm cookie session của Flask.
+import api from "./apiClient";
 
 export async function registerUser(data) {
   return api.post("/auth/register", {
@@ -12,21 +10,22 @@ export async function registerUser(data) {
 }
 
 export async function loginUser(data) {
-  return api.post("/auth/login", {
+  const response = await api.post("/auth/login", {
     email: data.email,
     password: data.password,
   });
+
+  localStorage.setItem("access_token", response.data.access_token);
+  localStorage.setItem("user_id", response.data.user_id);
+  localStorage.setItem("username", response.data.username);
+
+  return response;
 }
 
 export async function logoutUser() {
-  await api.post("/auth/logout");
+  localStorage.removeItem("access_token");
   localStorage.removeItem("user_id");
   localStorage.removeItem("username");
-}
-
-export async function getCurrentUser() {
-  const response = await api.get("/auth/me");
-  return response.data;
 }
 
 export function getUserId() {

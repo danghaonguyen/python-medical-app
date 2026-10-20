@@ -1,17 +1,6 @@
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  LabelList,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import Modal from "react-modal";
 import { FiX } from "react-icons/fi";
-import "./PredictionChart.css";
+import "../css/PredictionChart.css";
 
 Modal.setAppElement("#root");
 
@@ -25,49 +14,118 @@ const ageGroupLabel = (age) => {
 
 const getColor = (value, min, max) => {
   const range = max - min;
-  if (value < min - range * 0.2 || value > max + range * 0.2) return "#d94a4a";
-  if (value < min || value > max) return "#e8a33d";
+
+  if (value < min - range * 0.2 || value > max + range * 0.2) {
+    return "#d94a4a";
+  }
+
+  if (value < min || value > max) {
+    return "#e8a33d";
+  }
+
   return "#319b68";
 };
 
-const buildChartData = (formData) => [
-  { name: "Đường huyết", user: Number(formData.glucose) || 0, normal: 5.5, normalMin: 3.9, normalMax: 7 },
-  { name: "BMI", user: Number(formData.bmi) || 0, normal: 22, normalMin: 18.5, normalMax: 24.9 },
-  { name: "Huyết áp tâm thu", user: Number(formData.systolic_bp) || 0, normal: 110, normalMin: 90, normalMax: 120 },
-  { name: "Huyết áp tâm trương", user: Number(formData.diastolic_bp) || 0, normal: 75, normalMin: 60, normalMax: 80 },
-  { name: "Nhịp tim", user: Number(formData.pulse_rate) || 0, normal: 80, normalMin: 60, normalMax: 100 },
-];
+const getStatus = (value, min, max) => {
+  const color = getColor(value, min, max);
 
-const axisLabels = {
-  "Đường huyết": "Đường huyết",
-  BMI: "BMI",
-  "Huyết áp tâm thu": "HA tâm thu",
-  "Huyết áp tâm trương": "HA tâm trương",
-  "Nhịp tim": "Nhịp tim",
+  if (color === "#319b68") {
+    return {
+      label: "Trong khoảng tham khảo",
+      className: "status-normal",
+    };
+  }
+
+  if (color === "#e8a33d") {
+    return {
+      label: "Ngoài khoảng tham khảo",
+      className: "status-warning",
+    };
+  }
+
+  return {
+    label: "Lệch xa khoảng tham khảo",
+    className: "status-alert",
+  };
 };
 
-function PredictionTooltip({ active, payload, label }) {
-  if (!active || !payload?.length) return null;
-  const data = payload[0].payload;
+const buildChartData = (formData) => [
+  {
+    name: "Đường huyết",
+    user: Number(formData.glucose) || 0,
+    normal: 5.5,
+    normalMin: 3.9,
+    normalMax: 7,
+  },
+  {
+    name: "BMI",
+    user: Number(formData.bmi) || 0,
+    normal: 22,
+    normalMin: 18.5,
+    normalMax: 24.9,
+  },
+  {
+    name: "Huyết áp tâm thu",
+    user: Number(formData.systolic_bp) || 0,
+    normal: 110,
+    normalMin: 90,
+    normalMax: 120,
+  },
+  {
+    name: "Huyết áp tâm trương",
+    user: Number(formData.diastolic_bp) || 0,
+    normal: 75,
+    normalMin: 60,
+    normalMax: 80,
+  },
+  {
+    name: "Nhịp tim",
+    user: Number(formData.pulse_rate) || 0,
+    normal: 80,
+    normalMin: 60,
+    normalMax: 100,
+  },
+];
 
-  return (
-    <div className="prediction-tooltip">
-      <p className="prediction-tooltip-title">{label}</p>
-      {payload.map((entry) => (
-        <p key={entry.dataKey} className={entry.dataKey === "user" ? "tooltip-user" : "tooltip-normal"}>
-          <span>{entry.dataKey === "user" ? "Chỉ số của bạn" : "Ngưỡng tham khảo"}</span>
-          <strong>{entry.value}</strong>
-        </p>
-      ))}
-      <small>Khoảng tham khảo: {data.normalMin} - {data.normalMax}</small>
-    </div>
+const units = {
+  "Đường huyết": "mmol/L",
+  BMI: "kg/m²",
+  "Huyết áp tâm thu": "mmHg",
+  "Huyết áp tâm trương": "mmHg",
+  "Nhịp tim": "bpm",
+};
+
+const formatValue = (value) =>
+  Number.isInteger(value) ? value : Number(value.toFixed(1));
+
+const getRangePosition = (item) => {
+  const range = item.normalMax - item.normalMin;
+  const padding = range * 0.25;
+
+  const scaleMin = Math.max(
+    0,
+    Math.min(item.normalMin, item.normal, item.user) - padding,
   );
-}
+
+  const scaleMax = Math.max(item.normalMax, item.normal, item.user) + padding;
+
+  const scaleWidth = scaleMax - scaleMin;
+
+  const getPosition = (value) => ((value - scaleMin) / scaleWidth) * 100;
+
+  return {
+    scaleMin,
+    scaleMax,
+    rangeLeft: getPosition(item.normalMin),
+    rangeWidth: getPosition(item.normalMax) - getPosition(item.normalMin),
+    userWidth: getPosition(item.user),
+    normalWidth: getPosition(item.normal),
+  };
+};
 
 function PredictionChart({ formData, onClose }) {
   const data = buildChartData(formData);
   const age = Number(formData.age);
-  const ageColor = age < 30 ? "#319b68" : age <= 50 ? "#e8a33d" : "#d94a4a";
 
   return (
     <Modal
@@ -77,38 +135,178 @@ function PredictionChart({ formData, onClose }) {
       className="prediction-chart-modal"
       overlayClassName="prediction-chart-overlay"
     >
-      <button type="button" className="prediction-chart-close" onClick={onClose} aria-label="Đóng biểu đồ" title="Đóng">
+      <button
+        type="button"
+        className="prediction-chart-close"
+        onClick={onClose}
+        aria-label="Đóng biểu đồ"
+        title="Đóng"
+      >
         <FiX aria-hidden="true" />
       </button>
-      <section className="chart-box" aria-label="Biểu đồ so sánh chỉ số sức khỏe">
+
+      <section
+        className="chart-box"
+        aria-label="Biểu đồ so sánh chỉ số sức khỏe"
+      >
         <div className="chart-header">
-          <div>
+          <div className="chart-heading-content">
             <span className="chart-eyebrow">PHÂN TÍCH CHỈ SỐ</span>
-            <h5>So sánh với ngưỡng tham khảo</h5>
-            <p>Giá trị càng gần vùng tham khảo, chỉ số càng ổn định.</p>
+
+            <h5>Phân tích và so sánh sức khỏe</h5>
+
+            <p>
+              So sánh chỉ số bạn đã nhập với mốc đối chiếu và khoảng tham khảo
+              của từng chỉ số.
+            </p>
           </div>
-          <div className="age-group-badge" style={{ background: ageColor }}>
+
+          <div className="age-group-badge">
             <span>Nhóm tuổi</span>
             <strong>{ageGroupLabel(age)} tuổi</strong>
           </div>
         </div>
-        <div className="chart-legend-note"><span className="legend-dot user-dot"></span> Chỉ số của bạn <span className="legend-dot normal-dot"></span> Ngưỡng tham khảo</div>
-        <div className="prediction-chart-canvas">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 30, right: 18, left: 0, bottom: 58 }} barCategoryGap="18%">
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#d9e6e9" />
-              <XAxis dataKey="name" interval={0} tickFormatter={(value) => axisLabels[value] || value} height={54} tick={{ fontSize: 16, fill: "#243447", fontWeight: 600 }} axisLine={{ stroke: "#b7cbd0" }} tickLine={false} />
-              <YAxis tick={{ fontSize: 15, fill: "#526579" }} axisLine={false} tickLine={false} />
-              <Tooltip content={<PredictionTooltip />} cursor={{ fill: "rgba(8, 127, 140, .06)" }} />
-              <Bar dataKey="user" name="Chỉ số của bạn">
-                {data.map((item) => <Cell key={item.name} fill={getColor(item.user, item.normalMin, item.normalMax)} />)}
-                <LabelList dataKey="user" position="top" fill="#243447" fontSize={15} />
-              </Bar>
-              <Bar dataKey="normal" name="Ngưỡng tham khảo" fill="#6dbd78">
-                <LabelList dataKey="normal" position="top" fill="#377b50" fontSize={15} />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+
+        <div className="chart-guide">
+          <div className="chart-guide-item">
+            <span className="guide-user-marker" />
+            <span>Chỉ số của bạn</span>
+          </div>
+
+          <div className="chart-guide-item">
+            <span className="guide-reference-marker" />
+            <span>Chỉ số ổn định</span>
+          </div>
+
+          <div className="chart-guide-item">
+            <span className="guide-range" />
+            <span>Khoảng tham khảo</span>
+          </div>
+
+          <p>
+            Mỗi chỉ số có hai thanh riêng để so sánh. Dải xanh nhạt phía sau
+            biểu thị khoảng tham khảo; chiều dài thanh biểu thị vị trí của giá
+            trị trên thang đo.
+          </p>
+        </div>
+
+        <div className="metric-chart-list">
+          {data.map((item) => {
+            const {
+              scaleMin,
+              scaleMax,
+              rangeLeft,
+              rangeWidth,
+              userWidth,
+              normalWidth,
+            } = getRangePosition(item);
+
+            const status = getStatus(item.user, item.normalMin, item.normalMax);
+
+            const userColor = getColor(
+              item.user,
+              item.normalMin,
+              item.normalMax,
+            );
+
+            return (
+              <article className="metric-chart-row" key={item.name}>
+                <div className="metric-chart-heading">
+                  <div>
+                    <h6 className="metric-chart-name">{item.name}</h6>
+                    <p className="metric-chart-range-text">
+                      Khoảng tham khảo: {item.normalMin}–{item.normalMax}{" "}
+                      {units[item.name]}
+                    </p>
+                  </div>
+
+                  <span className={`metric-status ${status.className}`}>
+                    <span className="metric-status-dot" />
+                    {status.label}
+                  </span>
+                </div>
+
+                <div className="metric-bar-comparison">
+                  <div className="metric-bar-label">
+                    <span className="metric-bar-label-dot user-dot" />
+                    <span>Chỉ số của bạn</span>
+                    <strong>
+                      {formatValue(item.user)} {units[item.name]}
+                    </strong>
+                  </div>
+
+                  <div
+                    className="metric-bar-track"
+                    role="img"
+                    aria-label={`${item.name}, chỉ số của bạn ${formatValue(item.user)} ${units[item.name]}.`}
+                  >
+
+                    <div
+                      className="metric-bar-fill user-bar"
+                      style={{
+                        width: `${userWidth}%`,
+                        backgroundColor: userColor,
+                      }}
+                    />
+                  </div>
+
+                  <div className="metric-bar-label reference-bar-label">
+                    <span className="metric-bar-label-dot reference-dot" />
+                    <span>Chỉ số ổn định</span>
+                    <strong>
+                      {formatValue(item.normal)} {units[item.name]}
+                    </strong>
+                  </div>
+
+                  <div
+                    className="metric-bar-track"
+                    role="img"
+                    aria-label={`${item.name}, mốc so sánh ${formatValue(item.normal)} ${units[item.name]}.`}
+                  >
+                    <div
+                      className="metric-reference-range"
+                      style={{
+                        left: `${rangeLeft}%`,
+                        width: `${rangeWidth}%`,
+                      }}
+                    />
+
+                    <div
+                      className="metric-bar-fill reference-bar"
+                      style={{
+                        width: `${normalWidth}%`,
+                        backgroundColor: "#319b68",
+                      }}
+                    />
+                  </div>
+
+                  <div className="metric-chart-scale">
+                    <span>{formatValue(scaleMin)}</span>
+                    <span>{formatValue(scaleMax)}</span>
+                  </div>
+                </div>
+
+                <div className="metric-comparison-result">
+                  <span>Chênh lệch so với chỉ số ổn định</span>
+
+                  <strong>
+                    {item.user === item.normal
+                      ? "Ổn định"
+                      : `${item.user > item.normal ? "+" : "−"}${formatValue(
+                          Math.abs(item.user - item.normal),
+                        )} ${units[item.name]}`}
+                  </strong>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+
+        <div className="chart-medical-note">
+          <strong>Lưu ý:</strong> Trạng thái chỉ phản ánh giá trị so với khoảng
+          tham khảo được cấu hình, không phải chẩn đoán y tế. Các mốc và khoảng
+          tham khảo cần được xác minh theo hướng dẫn chuyên môn phù hợp trước
+          khi sử dụng thực tế.
         </div>
       </section>
     </Modal>

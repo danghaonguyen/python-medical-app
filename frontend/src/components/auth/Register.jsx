@@ -14,14 +14,16 @@ const Register = () => {
 
   const navigate = useNavigate();
 
+  // Chuyển hướng nếu đã đăng nhập
   useEffect(() => {
-    const userId = localStorage.getItem("user_id");
+    const token = localStorage.getItem("access_token");
 
-    if (userId) {
+    if (token) {
       navigate("/", { replace: true });
     }
   }, [navigate]);
 
+  // ================= REGISTER =================
   const handleRegister = async () => {
     if (!username.trim() || !email.trim() || !password || !confirmPassword) {
       return toast.warning("Vui lòng nhập đầy đủ thông tin");
@@ -111,10 +113,7 @@ const Register = () => {
           </button>
         </div>
 
-        <button
-          className="auth-button"
-          onClick={handleRegister}
-        >
+        <button className="auth-button" onClick={handleRegister}>
           Đăng ký
         </button>
 

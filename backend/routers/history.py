@@ -1,10 +1,12 @@
 
 from datetime import datetime
 
-from flask import Blueprint, jsonify, session
+from flask import Blueprint, jsonify, request
+from services.auth_middleware import token_required
 
 from database.database import db
 from database_models.models_prediction import Prediction
+
 
 history_bp = Blueprint("history", __name__)
 
@@ -26,17 +28,18 @@ def serialize_prediction(prediction):
     return result
 
 
-# ================== LẤY LỊCH SỬ ==================
+# ================== XEM CHI TIẾT LỊCH SỬ ==================
 
 @history_bp.route("/history/<int:user_id>", methods=["GET"])
+@token_required
 def get_history(user_id):
-    if session.get("user_id") != user_id:
+    if request.user_id != user_id:
         return jsonify({"message": "Không có quyền truy cập"}), 403
 
     try:
         predictions = (
             Prediction.query
-            .filter_by(user_id=user_id)
+            .filter_by(user_id=request.user_id)
             .order_by(Prediction.created_at.desc())
             .all()
         )
@@ -56,11 +59,9 @@ def get_history(user_id):
 # ================== XÓA LỊCH SỬ ==================
 
 @history_bp.route("/history/<int:prediction_id>", methods=["DELETE"])
+@token_required
 def delete_prediction(prediction_id):
-    user_id = session.get("user_id")
-
-    if not user_id:
-        return jsonify({"message": "Vui lòng đăng nhập"}), 401
+    user_id = request.user_id
 
     try:
         prediction = Prediction.query.filter_by(
