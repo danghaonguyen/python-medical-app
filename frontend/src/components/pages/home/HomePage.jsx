@@ -50,10 +50,6 @@ const HomePage = () => {
                   Bắt đầu dự đoán
                   <span aria-hidden="true">→</span>
                 </Link>
-
-                <a href="/intrust" className="home-secondary-button">
-                  Xem hướng dẫn
-                </a>
               </div>
 
               <div className="home-intro-note">
