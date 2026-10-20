@@ -9,7 +9,7 @@
   position: sticky;
   top: 0;
   z-index: 999;
-  background:#075985;
+  background: #075985;
   border-bottom: none;
   box-shadow: 0 2px 12px rgba(18, 59, 93, 0.12);
 }
@@ -39,7 +39,7 @@
   font-weight: 600;
   line-height: 1.2;
   white-space: nowrap;
-  font-family: Georgia, 'Times New Roman', Times, serif;
+  font-family: Georgia, "Times New Roman", Times, serif;
 }
 
 .site-navbar-brand img {
@@ -149,7 +149,6 @@
   overflow: hidden;
   max-width: 135px;
   text-overflow: ellipsis;
-
 }
 
 .user-menu-arrow {
@@ -166,7 +165,7 @@
   transform: rotate(180deg);
 }
 
-/* User dropdown menu */
+/* User dropdown menu - desktop */
 .user-menu-panel {
   position: absolute;
   top: calc(100% + 8px);
@@ -190,7 +189,7 @@
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: var(--medical-text);
+  color: #075985;
   text-align: left;
   font-family: inherit;
   font-size: 16px;
@@ -200,7 +199,6 @@
   transition:
     color 0.18s ease,
     background-color 0.18s ease;
-    color: #075985;
 }
 
 .user-menu-panel button svg {
@@ -213,7 +211,6 @@
 .user-menu-panel button:hover {
   background-color: #075985;
   color: #ffffff;
-  opacity: 1;
 }
 
 .user-menu-panel .user-menu-logout {
@@ -223,7 +220,6 @@
 .user-menu-panel .user-menu-logout:hover {
   background-color: #075985;
   color: #ffffff;
-  opacity: 1;
 }
 
 /* Mobile menu toggle */
@@ -231,6 +227,8 @@
   display: none;
   align-items: center;
   justify-content: center;
+  flex-direction: column;
+  gap: 5px;
   width: 42px;
   height: 42px;
   padding: 8px;
@@ -238,13 +236,19 @@
   border-radius: 9px;
   background: transparent;
   cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.18s ease;
+}
+
+.nav-toggle:hover {
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .nav-toggle span {
   display: block;
   width: 20px;
   height: 2px;
-  margin: 3px 0;
+  margin: 0;
   border-radius: 3px;
   background: #fff;
   transition:
@@ -257,7 +261,6 @@
   .site-navbar-inner {
     position: relative;
     min-height: 70px;
-
   }
 
   .site-navbar-brand img {
@@ -266,40 +269,48 @@
 
   .nav-toggle {
     display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
   }
 
   .site-nav {
     position: absolute;
-    top: calc(100% + 7px);
+    top: calc(100% + 8px);
     right: 0;
     left: 0;
     display: none;
-    max-height: calc(100vh - 90px);
+    max-height: calc(100dvh - 100px);
+    overflow-x: hidden;
     overflow-y: auto;
-    padding: 9px;
+    padding: 8px;
     border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 12px;
-    background: var(--medical-teal-dark);
+    background: #075985;
     box-shadow: 0 12px 28px rgba(18, 59, 93, 0.16);
+    overscroll-behavior: contain;
   }
 
   .site-nav.is-open {
     display: block;
-    background-color: #075985;
+    animation: mobile-menu-enter 0.18s ease-out;
   }
 
   .site-nav-links {
-    display: grid;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
     gap: 4px;
+    width: 100%;
   }
 
   .site-nav-link {
-    width: 100%;
+    display: flex;
     justify-content: flex-start;
+    width: 100%;
+    min-height: 46px;
     padding: 12px;
+    border-radius: 9px;
     font-size: 16px;
+    text-align: left;
     white-space: normal;
   }
 
@@ -314,27 +325,68 @@
     margin: 4px 0 0;
   }
 
+  .user-menu {
+    width: 100%;
+    min-width: 0;
+  }
+
   .user-menu-trigger {
     max-width: none;
   }
 
   .user-menu-trigger span {
+    min-width: 0;
     max-width: none;
+    overflow: hidden;
+    flex: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  .user-menu-panel {
-    position: static;
-    min-width: 0;
-    margin-top: 5px;
-    padding: 5px;
-    border-radius: 9px;
-    box-shadow: none;
-    animation: none;
+  .user-menu-arrow {
+    margin-left: auto;
   }
+
+ .user-menu-panel {
+  position: static;
+  display: grid;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  margin-top: 4px;
+  padding: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 9px;
+  background: transparent;
+  box-shadow: none;
+  animation: mobile-submenu-enter 0.16s ease-out;
+}
 
   .user-menu-panel button {
-    padding: 12px;
+    min-height: 44px;
+    padding: 11px 12px;
+    border-radius: 7px;
+    background: transparent;
+    color: #ffffff;
     font-size: 14px;
+    box-sizing: border-box;
+  }
+
+  .user-menu-panel button:hover,
+  .user-menu-panel button:focus-visible {
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+  }
+
+  .user-menu-panel .user-menu-logout {
+    color: #ffffff;
+  }
+
+  .user-menu-panel .user-menu-logout:hover,
+  .user-menu-panel .user-menu-logout:focus-visible {
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
   }
 }
 
@@ -346,19 +398,70 @@
     gap: 12px;
   }
 
+  .site-navbar-brand {
+    min-width: 0;
+    gap: 8px;
+  }
+
   .site-navbar-brand img {
     max-width: 155px;
     max-height: 44px;
+  }
+
+  .site-navbar-brand h3 {
+    font-size: 21px;
   }
 
   .nav-toggle {
     width: 40px;
     height: 40px;
   }
+
+  .site-nav {
+    top: calc(100% + 7px);
+    padding: 7px;
+    border-radius: 11px;
+  }
+
+  .site-nav-link {
+    min-height: 44px;
+    padding: 11px;
+    font-size: 15px;
+  }
+
+  .user-menu-panel button {
+    min-height: 42px;
+    padding: 10px 11px;
+    font-size: 14px;
+  }
 }
 
-/* Dropdown animation */
+/* Animations */
 @keyframes user-menu-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mobile-menu-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mobile-submenu-enter {
   from {
     opacity: 0;
     transform: translateY(-3px);
@@ -375,10 +478,12 @@
   .site-nav-link,
   .user-menu-arrow,
   .user-menu-panel button,
+  .nav-toggle,
   .nav-toggle span {
     transition: none;
   }
 
+  .site-nav,
   .user-menu-panel {
     animation: none;
   }
