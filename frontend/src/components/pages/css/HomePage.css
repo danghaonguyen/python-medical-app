@@ -78,8 +78,7 @@
   margin-top: 28px;
 }
 
-.home-primary-button,
-.home-secondary-button {
+.home-primary-button {
   min-height: 48px;
   display: inline-flex;
   align-items: center;
@@ -107,17 +106,6 @@
   border-color: #075985;
 }
 
-.home-secondary-button {
-  color: var(--medical-navy, #075985);
-  background: #ffffff;
-  border: 1px solid  #075985;
-}
-
-.home-secondary-button:hover {
-  color: #ffffff;
-  background: #075985;
-  border-color: var(--medical-teal, #075985);
-}
 
 .home-intro-note {
   display: flex;
@@ -165,8 +153,6 @@
   filter: brightness(0) saturate(100%) invert(30%) sepia(33%)
   saturate(2312%) hue-rotate(167deg) brightness(91%) contrast(97%);;
 }
-
-
 
 .home-actions {
   padding: 52px 0 60px;
@@ -323,8 +309,7 @@
     margin-top: 22px;
   }
 
-  .home-primary-button,
-  .home-secondary-button {
+  .home-primary-button {
     min-height: 46px;
     padding: 11px 14px;
     font-size: 13px;
