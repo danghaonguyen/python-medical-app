@@ -17,7 +17,7 @@ Hệ thống gồm ba thành phần chính:
 ## ✨ Chức năng chính
 
 ### 1. Quản lý tài khoản
-- Tài khoản test: benjamin@gmail.com | 250303benjamin
+- Tài khoản: benjamin@gmail.com | 250303benjamin
 - Đăng ký tài khoản bằng email.
 - Đăng nhập và đăng xuất.
 
