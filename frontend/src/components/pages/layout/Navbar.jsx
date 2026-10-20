@@ -30,11 +30,13 @@ function Navbar() {
     setIsUserMenuOpen(false);
   };
 
-  const handlePredictClick = () => {
+   const handlePredictClick = () => {
     closeMenus();
-    if (location.pathname === "/prediction") window.location.reload();
-    else navigate("/prediction");
-  };
+  
+    if (location.pathname !== "/prediction") {
+      navigate("/prediction");
+    }
+  };;
 
   const scrollTo = (path, targetId) => {
     closeMenus();
